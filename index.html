@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VRA GATE ENTRY</title>
+    <title>VRA GP CREATION</title>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Outfit:wght@300;400;500;600;700&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -1086,7 +1086,7 @@
                 <img class="header-logo" src="https://drive.google.com/thumbnail?id=1b97tYz4ZW__m1oK6hfwxkznuBlYyc_zQ&sz=s4000" alt="Logo">
             </div>
             <div class="header-text">
-                <h1>VRA GATE ENTRY</h1>
+                <h1>VRA GP CREATION</h1>
                 <div class="step-pill" id="header-sub">Step 1 of 3 — Language</div>
             </div>
         </div>
@@ -2194,6 +2194,15 @@ function closeTokenPopup() {
     window.location.reload();
 }
 
+// ── PRINT LAYOUT (adjust these to tune the printed size) ──
+const PRINT_PAGE_W_MM  = 148;   // paper width:  A5 = 148, A4 = 210
+const PRINT_PAGE_H_MM  = 210;   // paper height: A5 = 210, A4 = 297
+const PRINT_MARGIN_MM  = 4;     // blank border kept around the image (printers can't print right to the edge)
+const PRINT_ZOOM       = 1.0;   // 1.0 = fills the page width; 1.2 = 20% bigger (edges get cropped)
+const PRINT_SHIFT_X_MM = 0;     // move the image sideways (negative = left)
+const PRINT_SHIFT_Y_MM = 0;     // move the image up/down (negative = up)
+const PRINT_DEBUG_FRAME = true; // true = draws a red frame around the image for testing; set false when done
+
 function printSapImage(base64, mime) {
     const iframe = document.createElement('iframe');
     iframe.style.cssText = 'position:fixed; right:0; bottom:0; width:0; height:0; border:0;';
@@ -2241,8 +2250,17 @@ function printSapImage(base64, mime) {
         try {
             const doc = iframe.contentWindow.document;
             doc.open();
+            // doc.write(
+            //     '<html><head><style>@page{size: 148mm 210mm; margin: 0;} html,body{margin:0;padding:0;width:100%;height:100%;} img{display:block;position:absolute;top:0;left:5mm;max-width:100%;}</style></head><body>' +
+            //     '<img id="p" src="data:' + mime + ';base64,' + base64 + '"></body></html>'
+            // );
+            const imgW = (PRINT_PAGE_W_MM - 2 * PRINT_MARGIN_MM) * PRINT_ZOOM;
             doc.write(
-                '<html><head><style>@page{size: 148mm 210mm; margin: 0;} html,body{margin:0;padding:0;width:100%;height:100%;} img{display:block;position:absolute;top:0;left:5mm;max-width:100%;}</style></head><body>' +
+                '<html><head><style>@page{size: ' + PRINT_PAGE_W_MM + 'mm ' + PRINT_PAGE_H_MM + 'mm; margin: 0;} ' +
+                'html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;} ' +
+                'img{display:block;position:absolute;top:' + (PRINT_MARGIN_MM + PRINT_SHIFT_Y_MM) + 'mm;left:' + (PRINT_MARGIN_MM + PRINT_SHIFT_X_MM) + 'mm;width:' + imgW + 'mm;height:auto;' +
+                (PRINT_DEBUG_FRAME ? 'outline:3px solid red;outline-offset:-3px;' : '') + '}' +
+                '</style></head><body>' +
                 '<img id="p" src="data:' + mime + ';base64,' + base64 + '"></body></html>'
             );
             doc.close();
