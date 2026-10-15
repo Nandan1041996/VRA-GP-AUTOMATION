@@ -2201,7 +2201,7 @@ const PRINT_MARGIN_MM  = 4;     // blank border kept around the image (printers 
 const PRINT_ZOOM       = 1.0;   // 1.0 = fills the page width; 1.2 = 20% bigger (edges get cropped)
 const PRINT_SHIFT_X_MM = 0;     // move the image sideways (negative = left)
 const PRINT_SHIFT_Y_MM = 0;     // move the image up/down (negative = up)
-const PRINT_DEBUG_FRAME = false; // true = draws a red frame around the image for testing; set false when done
+const PRINT_DEBUG_FRAME = true; // true = draws a red frame around the image for testing; set false when done
 
 function printSapImage(base64, mime) {
     const iframe = document.createElement('iframe');
