@@ -1238,6 +1238,14 @@
                 <div class="field-error" id="dob-error"></div>
             </div>
 
+            <div class="field-group">
+                <div class="field-label" id="lbl-persons">
+                    Number of Persons <span class="field-req">*</span>
+                </div>
+                <input type="text" id="persons-input" class="field-input" placeholder="e.g. 2" maxlength="2" readonly inputmode="none" autocomplete="off" onfocus="vkOpen('persons')">
+                <div class="field-error" id="persons-error"></div>
+            </div>
+
             <div class="verify-status" id="verify-status">
                 <div class="spinner"></div>
                 <span id="verify-status-text">Verifying…</span>
@@ -1335,7 +1343,7 @@ const LANG_MAP = {
         name:'Gujarati', native:'ગુજરાતી',
         verifyTitle:'ડ્રાઇવર ચકાસણી',
         verifySub:'આગળ વધવા માટે તમારી લાઇસન્સ વિગત દાખલ કરો',
-        lblDL:'ડ્રાઇવિંગ લાઇસન્સ નંબર', lblDOB:'જન્મ તારીખ',
+        lblDL:'ડ્રાઇવિંગ લાઇસન્સ નંબર', lblDOB:'જન્મ તારીખ', lblPersons:'વ્યક્તિઓની સંખ્યા',
         hintDL:'માત્ર અક્ષરો અને સંખ્યા · 15 થી 19 અક્ષરો વચ્ચે',
         btnVerify:'ચકાસો અને આગળ વધો →',
         scanHint:'QR કોડને સ્કૅનર સામે સ્થિર રાખો',
@@ -1359,7 +1367,7 @@ const LANG_MAP = {
         name:'Hindi', native:'हिन्दी',
         verifyTitle:'चालक सत्यापन',
         verifySub:'आगे बढ़ने के लिए अपने लाइसेंस की जानकारी दर्ज करें',
-        lblDL:'ड्राइविंग लाइसेंस नंबर', lblDOB:'जन्म तिथि',
+        lblDL:'ड्राइविंग लाइसेंस नंबर', lblDOB:'जन्म तिथि', lblPersons:'व्यक्तियों की संख्या',
         hintDL:'केवल अक्षर और अंक · 15 से 19 अक्षर के बीच',
         btnVerify:'सत्यापित करें और जारी रखें →',
         scanHint:'QR कोड को स्कैनर के सामने स्थिर रखें',
@@ -1383,7 +1391,7 @@ const LANG_MAP = {
         name:'English', native:'English',
         verifyTitle:'Driver Verification',
         verifySub:'Enter your driving license details to proceed',
-        lblDL:'Driving License Number', lblDOB:'Date of Birth',
+        lblDL:'Driving License Number', lblDOB:'Date of Birth', lblPersons:'Number of Persons',
         hintDL:'Alphanumeric only · between 15 and 19 characters',
         btnVerify:'Verify & Continue →',
         scanHint:'Hold the QR code steady in front of the scanner',
@@ -1684,6 +1692,7 @@ function goToVerify() {
     document.getElementById('verify-sub').textContent      = L.verifySub;
     document.getElementById('lbl-dl').innerHTML            = L.lblDL + ' <span class="field-req">*</span>';
     document.getElementById('lbl-dob').innerHTML           = L.lblDOB + ' <span class="field-req">*</span>';
+    document.getElementById('lbl-persons').innerHTML       = (L.lblPersons || 'Number of Persons') + ' <span class="field-req">*</span>';
     document.getElementById('hint-dl').textContent         = L.hintDL;
     document.getElementById('btn-verify-text').textContent = L.btnVerify;
     ['dl-number','dob'].forEach(id => {
@@ -2109,6 +2118,7 @@ function onScanSuccess(decodedText) {
             qrDetails:     decodedText,
             sapStatus:     'A',
             uniqueNo:      window._uniqueNo,
+            persons:       document.getElementById('persons-input').value,
         })
     })
     .then(r => r.json())
@@ -2408,10 +2418,12 @@ function vkOpen(mode) {
     vkMode = mode;
     const kb = document.getElementById('vk');
     document.getElementById('vk-alnum').style.display   = mode === 'dl'  ? '' : 'none';
-    document.getElementById('vk-numeric').style.display = mode === 'dob' ? '' : 'none';
+    document.getElementById('vk-numeric').style.display = (mode === 'dob' || mode === 'persons') ? '' : 'none';
+    const doneBtn = document.querySelector('#vk-numeric .vk-key.done');
+    if (doneBtn) doneBtn.textContent = mode === 'dob' ? 'Next →' : 'Done ✓';
     kb.classList.add('show');
     document.body.style.paddingBottom = (kb.offsetHeight + 20) + 'px';
-    const target = document.getElementById(mode === 'dl' ? 'dl-number' : 'dob-text');
+    const target = document.getElementById(mode === 'dl' ? 'dl-number' : mode === 'dob' ? 'dob-text' : 'persons-input');
     setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80);
 }
 
@@ -2420,12 +2432,13 @@ function vkClose() {
     document.getElementById('vk').classList.remove('show');
     document.body.style.paddingBottom = '';
     const a = document.activeElement;
-    if (a && (a.id === 'dl-number' || a.id === 'dob-text')) a.blur();
+    if (a && (a.id === 'dl-number' || a.id === 'dob-text' || a.id === 'persons-input')) a.blur();
 }
 
 function vkPress(key) {
     if (key === 'DONE') {
         if (vkMode === 'dl') document.getElementById('dob-text').focus();
+        else if (vkMode === 'dob') document.getElementById('persons-input').focus();
         else vkClose();
         return;
     }
@@ -2440,6 +2453,13 @@ function vkPress(key) {
         else if (key === 'CLEAR') dobDigits = '';
         else if (dobDigits.length < 8) dobDigits += key;
         vkDobRefresh();
+    } else if (vkMode === 'persons') {
+        const el = document.getElementById('persons-input');
+        if (key === 'BACK') el.value = el.value.slice(0, -1);
+        else if (key === 'CLEAR') el.value = '';
+        else if (el.value.length < 2) el.value += key;
+        el.value = el.value.replace(/^0+/, '');
+        validatePersons(false);
     }
 }
 
@@ -2482,6 +2502,21 @@ function vkDobRefresh() {
     vkMirrorDobState();
 }
 
+function validatePersons(showError) {
+    const inp = document.getElementById('persons-input');
+    const err = document.getElementById('persons-error');
+    const ok  = /^[1-9][0-9]?$/.test(inp.value);
+    inp.classList.remove('error', 'success');
+    err.classList.remove('show');
+    if (ok) { inp.classList.add('success'); return true; }
+    if (showError) {
+        err.textContent = 'Please enter the number of persons (1 to 99).';
+        err.classList.add('show');
+        inp.classList.add('error');
+    }
+    return false;
+}
+
 function vkVerifyClick() {
     vkClose();
     const dobEl = document.getElementById('dob');
@@ -2494,6 +2529,7 @@ function vkVerifyClick() {
         }
         return;
     }
+    if (!validatePersons(true)) return;
     verifyDriver();
 }
 
